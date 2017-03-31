@@ -261,8 +261,9 @@ describe("Admin API", function()
   end)
 
   describe("/upstreams/{upstream}/targets/active/", function()
-    describe("only shows active targets", function()
+    describe("GET", function()
       local upstream_name3 = "example.com"
+      local api4
 
       before_each(function()
         local upstream3 = assert(helpers.dao.upstreams:insert {
@@ -298,9 +299,21 @@ describe("Admin API", function()
           upstream_id = upstream3.id,
         })
 
-        -- and an insert of a separate active target
+        -- an insert of a separate active target
         assert(helpers.dao.targets:insert {
           target = "api-3:80",
+          weight = 10,
+          upstream_id = upstream3.id,
+        })
+
+        -- two target inserts (we should only see the last one)
+        assert(helpers.dao.targets:insert {
+          target = "api-4:80",
+          weight = 10,
+          upstream_id = upstream3.id,
+        })
+        api4 = assert(helpers.dao.targets:insert {
+          target = "api-4:80",
           weight = 10,
           upstream_id = upstream3.id,
         })
@@ -313,10 +326,11 @@ describe("Admin API", function()
         })
         assert.response(res).has.status(200)
         local json = assert.response(res).has.jsonbody()
-        assert.equal(2, #json.data)
-        assert.equal(2, json.total)
-        assert.equal("api-3:80", json.data[1].target)
-        assert.equal("api-2:80", json.data[2].target)
+        assert.equal(3, #json.data)
+        assert.equal(3, json.total)
+        assert.equal(api4.id, json.data[1].id)
+        assert.equal("api-3:80", json.data[2].target)
+        assert.equal("api-2:80", json.data[3].target)
       end)
     end)
   end)

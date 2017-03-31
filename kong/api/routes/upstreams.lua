@@ -148,13 +148,25 @@ return {
         if not found[entry.target] and not ignored[entry.target] then
           if entry.weight ~= 0 then
             entry.order = nil -- dont show our order key to the client
+
+            -- add what we want to send to the client in our array
             found_n = found_n + 1
             found[found_n] = entry
+
+            -- track that we found this host:port so we only show
+            -- the most recent one (kinda)
+            found[entry.target] = true
 
           else
             ignored[entry.target] = true
           end
         end
+      end
+
+      -- get rid of the hash elements we tracked
+      -- so we can send this to the client
+      for i = 1, found_n do
+        found[found[i].target] = nil
       end
 
       -- for now lets not worry about rolling our own pagination
